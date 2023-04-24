@@ -1,0 +1,434 @@
+---
+title: "Dictionary Methods"
+subtitle: "Introduction to Text as Data"
+author: "Amber Boydstun & Cory Struthers"
+date: "April 27-29, 2023"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  html_notebook:
+    code_folding: show
+    highlight: tango
+    theme: united
+    toc: yes
+    df_print: paged
+---
+
+```{r, setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "~/Dropbox/text-as-data-JUST-CORY-AND-AMBER/modules/data/")
+```
+
+
+### Introduction
+
+Dictionary approaches rely on the researcher to choose a set of words that captures a concept the researcher wants to measure. Often the concept we're interested in measuring is the `sentiment' of a text, meaning the degree to which the language is positive vs. negative. Other times, we're more interested in measuring the prevalence of a topic in a text, such as discussion of economic policy, discussion of dates and other calendar items, or discussion of giraffes and other amazing animals. Or perhaps we're interested in measuring the use of profanity (swear words) in a body of text. 
+
+If the concept we're interested in measuring is one that can be reasonably captured with a list of words, then dictionary methods can be a good approach. The method is relatively straightforward: For each concept we want to measure, we come up with a list of words (also known as a "dictionary" or "lexicon") and then we measure the prevalence of those words in the corpus. 
+
+In this module, we need the following packages:
+
+```{r, message=FALSE}
+
+# devtools::install_github("quanteda/quanteda.sentiment") 
+require(tidyverse)
+require(quanteda)
+require(quanteda.sentiment)
+require(ggplot2)
+
+# Set working directory
+setwd("/Users/cs86487/Dropbox/text-as-data-JUST-CORY-AND-AMBER/modules/data/")
+getwd() # view working directory
+
+```
+
+We can begin with a helpful toy example. Let's say we have the text of a set of restaurant reviews we'd like to know how customers experienced the restaurant. Below, we generate the toy example corpus. 
+
+```{r, message=FALSE}
+
+# generate toy example (restaurant reviews)
+reviews = c(rev1 = "Great menu ... I loved it. I'll definitely come again.", 
+              rev2 = "The food was great, but I did not like the service.",  
+              rev3 = "The food here is alright.", 
+              rev4 = "I don't recommend it; terrible service.", 
+              rev5 = "TERRIBLE.") 
+
+# convert it to document-feature matrix format
+rest_dfm = reviews %>% 
+    tokens(remove_punct = TRUE) %>% ## remove punctuation
+    dfm(tolower = TRUE)  %>% ##  lowercase
+    dfm_remove(pattern = stopwords("english")) ## ignore common words on a "stop" list
+rest_dfm  
+```
+
+\
+
+###  Apply sentiment analysis
+
+To evaluate customers' experience, we define a simple dictionary for restaurant reviews by using `dictionary()`. The researcher chooses which words represent a positive tone and which represent a negative tone.
+
+```{r, message=FALSE}
+
+# asterisk next to love, hate, and dislike captures all conjugations (e.g., loved, disliked)
+rest_dict = dictionary(list(positive = c("great","good","excellent","outstanding","best",
+                                          "like","liked","love*", "right","well", 
+                                          "recommend", "tasty", "appetizing", "friendly", 
+                                          "helpful"),
+                             negative = c("bad", "terrible","atrocious", "awful", "worst", 
+                                          "awful", "dislike*", "hate", 
+                                          "poor", "badly", "rude","slow","dirty","cold")))
+rest_dict
+
+```
+
+Apply `dfm_lookup()` to the dfm we just created and get a new matrix with columns corresponding to the dictionary categories.
+
+```{r, message=FALSE}
+
+rest_dfm_out = dfm_lookup(rest_dfm, dictionary = rest_dict)
+rest_dfm_out
+
+```
+
+The output tells us how many positive and negative words or phraes are included in each restaurant review. The first four reviews contain at least one positive word and zero negative words, suggesting they have a more positive tone. The fifth review has one negative word and no positive words, suggesting it has a more negative tone. 
+
+Is the dictionary characterizing the reviews well?
+
+Not quite. Both the second and fourth reviews are largely mischaracterizing the sentiment of the customer. This is why manual content analysis and verification steps are critical. By adding compounds to the dfm before excluding stopwords and adding negation terms to the dictionary, we better represent the sentiment in the reviews. Importantly, when we add a negation term (e.g., "not good"), `dfm_lookup` no longer counts the positive word ("good") in the text because it matches to the compound found in the dfm.
+
+```{r, message=FALSE}
+
+# convert to dfm again, dropping stopwords *after* compounds created
+rest_toks = reviews %>% 
+    tokens(remove_punct = TRUE)  # create tokens object to add compounds
+rest_dfm_comp = tokens_compound(rest_toks, pattern = phrase(c("did not like", "didn't like", "do not recommend", "don't recommend"))) %>% 
+    dfm(tolower = TRUE)   %>% ##  lowercase 
+    dfm_remove(pattern = stopwords("english")) ## now exclude stop words
+rest_dfm_comp
+
+# revise dictionary, adding negation
+rest_dict_revised = dictionary(list(positive = c("great","good","excellent","outstanding","best",
+                                          "like","liked","love*", "right","well", 
+                                          "recommend", "tasty", "appetizing", "friendly", 
+                                          "helpful"),
+                             negative = c("bad", "terrible","atrocious", "awful", "worst", 
+                                          "awful", "dislike*", "hate", 
+                                          "poor", "badly", "rude","slow","dirty","cold",
+                                          "did not like", "didn't like", "do not recommend", "don't recommend")))
+rest_dict_revised
+
+# apply dictionary once more
+rest_dfm_revised_out = dfm_lookup(rest_dfm_comp, dictionary = rest_dict_revised)
+rest_dfm_revised_out
+
+```
+
+\
+
+---
+
+**Question 1: What is the sentiment value for rev3? Is that accurate? Why or why not?**
+
+---
+
+\
+
+An alternative approach to creating your own dictionary is using an established one. The use of established dictionaries is common in sentiment analysis. For example, [*Lexicoder Sentiment Dictionary (2015)*](https://quanteda.io/reference/data_dictionary_LSD2015.html) (LSD) is a built-in dictionary in `quanteda` package. This dictionary consists of 2,858 "negative" and 1,709 "positive" sentiment words. Negations of negative and positive words (like our example above illustrates) are also included. 
+
+```{r, message=FALSE}
+
+# Inspect Lexicoder Sentiment Dictionary
+data_dictionary_LSD2015 
+
+```
+
+Dictionary-based sentiment analysis in quanteda can take place in two different forms, depending on whether dictionary keys are part of a polarity-based sentiment scheme -- such as positive versus negative dictionary categories (keys) -- or whether a continuous sentiment score is associated with individual word patterns, what we call a valence-based sentiment scheme.
+
+Dictionaries can have both polarity and valence weights, but these are not used in the same sentiment scoring scheme. "Polarity" is a category of one of two "poles" (such as negative and positive) applied to dictionary keys, whereas "valence" is a weight applied individually to each value within a key.
+
+The [`quanteda.sentiment` package](https://github.com/quanteda/quanteda.sentiment), which we loaded earlier, extends the `quanteda` package with functions for computing sentiment on text. It also includes eight additional sentiment dictionaries, spanning both polarity and valence:
+
+
+| **Name**                         | **Description**                                               | **Polarity** | **Valence** |
+|----------------|------------------------|----------------|----------------|
+| data_dictionary_AFINN            | Nielsen's (2011) 'new ANEW' valenced word list                |              | X           |
+| data_dictionary_ANEW             | Affective Norms for English Words (ANEW)                      |              | X           |
+| data_dictionary_geninqposneg     | Augmented General Inquirer *Positiv* and *Negativ* dictionary | \-           |             |
+| data_dictionary_HuLiu            | Positive and negative words from Hu and Liu (2004)            | \-           |             |
+| data_dictionary_LoughranMcDonald | Loughran and McDonald Sentiment Word Lists                    | \-           |             |
+| data_dictionary_LSD2015          | Lexicoder Sentiment Dictionary (2015)                         | \-           |             |
+| data_dictionary_NRC              | NRC Word-Emotion Association Lexicon                          | \-           |             |
+| data_dictionary_Rauh             | Rauh's German Political Sentiment Dictionary                  | \-           |             |
+| data_dictionary_sentiws          | SentimentWortschatz (SentiWS)                                 | \-           | \-          |
+
+
+We can apply these established dictionaries to larger and more complex corpora. In the following example, we'll examine trends in the sentiment of immigration tweets from 2013-2017. 
+
+After constructing or retrieving the corpus, we create the DFM and apply the sentiment dictionary to count the number of positive and negative words and phrases in each tweet using the LSD dictionary. 
+
+```{r, message=FALSE}
+
+# upload twitter corpus
+tweet_corp = readRDS("tweet_corp.RDS")
+
+# create dfm
+tweet_dfm = tweet_corp %>%
+    tokens(remove_punct = TRUE, 
+           remove_numbers = TRUE, 
+           remove_symbols = TRUE) %>% 
+    dfm(tolower = TRUE)  %>% # convert to lowercase
+    dfm_remove(pattern = stopwords("english")) ## exclude common words on a "stop" list
+
+# apply LSD for positive and negative words in each tweet (for simplicity, ignoring negation)
+tweet_words_dict = dfm_lookup(tweet_dfm, dictionary = data_dictionary_LSD2015) 
+tweet_words_dict
+
+```
+
+Let's review a few of the tweets to see if the sentiment captures are accurate.
+
+```{r, message=FALSE}
+
+tweet_words_dict_df = convert(tweet_words_dict, "data.frame")
+tweet_words_dict_df[451, ]
+as.character(tweet_corp[1]) # capturing 'dirty'
+as.character(tweet_corp[451])
+
+```
+
+It seems like the tweet in text451 is more negative than positive, but the dictionary result doesn't reflect that. What did we forget? 
+
+Compound tokens! 
+
+```{r, message=FALSE}
+
+# revised dfm, this time with compound terms generated from the dictionary
+tweet_dfm_revised  = tweet_corp %>%
+    tokens(remove_punct = TRUE, 
+           remove_numbers = TRUE, 
+           remove_symbols = TRUE) %>% 
+    tokens_compound(data_dictionary_LSD2015) %>% # here, adding all compound terms in the dictionary
+    dfm(tolower = TRUE)  %>% 
+    dfm_remove(pattern = stopwords("english")) 
+
+# apply same dictionary to revised dfm 
+tweet_words_dict_revised = dfm_lookup(tweet_dfm_revised, dictionary = data_dictionary_LSD2015) 
+tweet_words_dict_revised
+
+# Negated terms now counted
+tweet_words_dict_df_revised = convert(tweet_words_dict_revised, "data.frame")
+tweet_words_dict_df_revised[451, ]
+
+```
+
+We now have the number of positive and negative words and phrases for each tweet. Let's calculate the proportion of positive and negative words used in each year (2013-2017) by counting the total number of words in a tweet and merging the dfm output with the count dataframe. 
+
+```{r, message=FALSE}
+
+# sum the total number of sentiment words
+tweet_words_dict_df_revised$total = rowSums(tweet_words_dict_df_revised[,c(2:4)])
+
+# convert dfm with dict to a data frame
+tweet_words_dict_df = convert(tweet_words_dict, to = "data.frame")
+
+# grab docvars, rename doc_id so the two match
+tweet_docvars_df = docvars(tweet_corp)
+tweet_docvars_df = tweet_docvars_df %>% 
+       rename("doc_id" = "doc_id_keep")
+
+# left_join the total/positive/negative terms for each tweets back to our original data with the source var
+tweets_analysis = tweet_docvars_df %>%
+    left_join(tweet_words_dict_df_revised, by = "doc_id") 
+
+# shorten df for ease
+tweets_analysis %>% select(doc_id, year, total, negative, neg_positive, positive, neg_negative) %>% head()
+
+```
+
+We can manipulate the dataframe using tidyverse to examine the proportion of words that represent positive versus negative sentiment by each year. [AMBER: Might want to add description of sentiment score?] In the code below, we manipulate the `tweets_analysis` df to calculate percent positive, percent negative, and the difference (positive - negative) for a sentiment score for each year.
+
+```{r, message=FALSE}
+
+by_year = tweets_analysis %>%
+    group_by(year) %>%
+    summarise(total_words = sum(total),
+              total_neg = sum(negative, neg_positive), 
+              total_pos = sum(positive, neg_negative)) %>%
+    ungroup() %>%
+    mutate(negative = total_neg/total_words, 
+           positive = total_pos/total_words) %>%
+    mutate(difference = positive - negative) %>%
+    gather(key = measure, value = prop, c("negative", "positive", "difference"))
+by_year 
+
+```
+
+
+We can then plot the percent positive sentiment words using `ggplot2`. The figure below illustrates that tweets on immigration have become decreasingly positive since 2013, as indicated by the downward trend. 
+
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+
+by_year_pos = subset(by_year, measure=="positive")
+ggplot(data = by_year_pos, aes(x = year, y = prop, group = measure, colour = measure)) +
+    geom_line(size = 2) +
+    labs(x = "Year", y = "Proportion") + 
+    ggtitle("Proportion positive sentiment by year (2013-2017)") + 
+    theme_classic() + 
+    ylim(0,1)
+
+```
+
+
+\
+
+---
+
+**Question 2: Replicate the immigration tweet example from above, but this time apply the sentiment analysis skills to the Trump tweets corpus we previously analyzed ("trump_tweet_corp.rds"). Compare the results of sentiment analysis to the word frequency approaches and describe any differences in the trends observed.**
+
+---
+
+\
+
+### Apply topical dictionary
+
+Next we will apply topic-specific dictionaries. The logic is the same as the logic for sentiment dictionaries, however the lexicons we will now be measuring more than one category and considering topics as opposed to sentiment.
+
+First, let's load a corpus of speeches by high-ranking representatives of the EU Member states, as well as speeches by members of the European Parliament and representatives of the EU Commission and the European Central Bank. All speeches are stored (in some cases, translated) in English. There is also metadata on the speakers, length and occasion of the speeches.
+
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+
+# import data
+load("euspeech.korpus.RData")
+head(korpus.euspeech.stats)
+
+```
+
+We'll apply an dictionary that identifies populist versus liberal terms. The word list for "populism" below is from Rooduijn and Pauwels (2011) and the word list for "liberalism" is created by Puschmann and Haim (2019).
+
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+
+populism_liberalism_dict = dictionary(list(populism = c("elit*", "consensus*", "undemocratic*", 
+                                                            "referend*", "corrupt*", "propagand", 
+                                                            "politici*", "*deceit*", "*deceiv*", 
+                                                            "*betray*", "shame*", "scandal*", 
+                                                            "truth*", "dishonest*", "establishm*", 
+                                                            "ruling*"), 
+                                               liberalism = c("liber*", "free*", "indiv*", "open*", 
+                                                              "law*", "rules", "order", "rights", 
+                                                              "trade", "global", "inter*", "trans*", 
+                                                              "minori*", "exchange", "market*")))
+populism_liberalism_dict
+
+```
+
+
+We can apply the dictionary to the speech corpus, grouping by country or supranational entity (EU Commission, the EU Parliament, and the European Central Bank). Note that we do not need to use `tokens_compund` because the dictionary does not include compound terms.
+
+`dfm_weight` allows to transform the dictionary dfm into a metric other than a count. Below, we'll rely on the sentiment score metric, or the proportion of populist versus liberal words among total dictionary words.
+
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+
+eu_toks = tokens(korpus.euspeech, remove_punct=TRUE) %>%
+                tokens_remove(pattern = stopwords("en")) %>%
+                tokens_group(groups = country) # grouping by country or entity
+eu_dfm = dfm(eu_toks)
+
+eu_dfm_dict = dfm_lookup(eu_dfm, dictionary = populism_liberalism_dict)
+eu_dfm_dict
+
+dfm_eu_prop = dfm_weight(eu_dfm_dict, scheme = "prop")
+convert(dfm_eu_prop, "data.frame")
+
+```
+
+The results show that EU politicians use terms representing liberalism far more than they use terms representing populism. Yet there is some variation. Pocilymakers in Greece, Spain, and the EU Parliament tend to use populist rhethoric more often than policymakers elsewhere.
+
+Next, we calculate the percent of populist rhethoric between 2007-2015, distinguishing between national governments, which includes representatives of the EU Parliament ("regierung"), and the EU authorities (EU Commission and ECB).
+
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+
+eu_toks = tokens(korpus.euspeech, remove_punct=TRUE) %>%
+    tokens_remove(pattern = stopwords("en")) %>%
+    tokens_group(groups= interaction(Typ,Jahr)) # group by combination of actor type and year ("jahr")
+eu_dfm = dfm(eu_toks) 
+
+# apply dictionary
+eu_dfm_dict = dfm_lookup(eu_dfm, dictionary = populism_liberalism_dict)
+
+# transform to proportion
+dfm_eu_prop = dfm_weight(eu_dfm_dict, scheme = "prop")
+
+# df with topics by entity and year
+eu_topics_df = convert(dfm_eu_prop, "data.frame") %>% 
+  mutate(Typ = str_split(doc_id, "\\.", simplify = T)[,1]) %>% # return type variable
+  mutate(Jahr = str_split(doc_id, "\\.", simplify = T)[,2]) %>% # return year variable
+  select(Type=Typ, Year=Jahr, populism, liberalism)
+eu_topics_df
+
+```
+
+While grouping can be useful, we often want to observe variation at the smallest unit available (in this case the speech). Below, we generate the dfm without the grouping option and plot the variation of populism by country within individual speeches.
+
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+
+# create dfm
+eu_dfm_nogroup = tokens(korpus.euspeech, remove_punct=TRUE) %>%
+                tokens_remove(pattern = stopwords("en"))  %>% # removing grouping
+                dfm(tolower = TRUE)  %>% 
+                dfm_remove(pattern = stopwords("english")) 
+
+# apply dictionary
+eu_dfm_dict = dfm_lookup(eu_dfm_nogroup, dictionary = populism_liberalism_dict)
+eu_dfm_dict
+
+# transform to proportion
+dfm_eu_prop = dfm_weight(eu_dfm_dict, scheme = "prop")
+
+# generate df for plotting
+eu_poplib_analysis =  convert(dfm_eu_prop, "data.frame") %>% 
+  bind_cols(korpus.euspeech.stats) %>% 
+  filter(length >= 1200) # removing short speeches
+
+# plot populism by country
+ggplot(eu_poplib_analysis, aes(country, populism)) + 
+    geom_boxplot(outlier.size = 0) + 
+    geom_jitter(aes(country, populism), 
+                position = position_jitter(width = 0.4, height = 0), 
+                alpha = 0.1, size = 0.2, show.legend = F) +
+    theme_classic() +
+    theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+    xlab("Country") + ylab("Proportion populism") + 
+    ggtitle("Proportion of populist rhetoric among speeches of EU policymakers") 
+
+# mean populism
+aggregate(populism ~ country, data = eu_poplib_analysis, mean)
+
+```
+
+The boxplots suggest that the European Commission's share of the corpus (# observations) is large but the level of populist rhetoric among speeches is lower than most other entities.
+
+\
+
+---
+
+**Question 3: Using the `policy_agendas_english.RData` dictionary, reanalyze the EU speeches by creating a DFM and use the code below to select some topics and calculate the shares of topics based on this selection. Next, create a plot that shows the distribution of topics within the corpus by country based on the policy agenda dictionary.**
+
+---
+
+\ 
+
+```{r, message=FALSE, results=FALSE, eval=FALSE, echo=TRUE}
+
+eu+topics_pa = convert(dfm_eu_pa, "data.frame") %>%
+  rename(Country = document) %>%
+  select(Country, macroeconomics, finance, foreign_trade, labour, 
+         healthcare, immigration, education, intl_affairs, defence) %>%
+  gather(macroeconomics:defence, key = "Topic", value = "Share") %>% 
+  group_by(Country) %>% 
+  mutate(Share = Share/sum(Share)) %>% 
+  mutate(Topic = as_factor(Topic))
+
+```
+
+
+
