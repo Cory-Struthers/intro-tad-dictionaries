@@ -133,6 +133,10 @@ rest_dfm_revised_out
 
 \
 
+<center>![](/Users/cs86487/Dropbox/text-as-data-JUST-CORY-AND-AMBER/images/sentiment analysis.jpeg){width="60%"}</center>
+
+\
+
 An alternative approach to creating your own dictionary is using an established one. The use of established dictionaries is common in sentiment analysis. For example, [*Lexicoder Sentiment Dictionary (2015)*](https://quanteda.io/reference/data_dictionary_LSD2015.html) (LSD) is a built-in dictionary in `quanteda` package. This dictionary consists of 2,858 "negative" and 1,709 "positive" sentiment words. Negations of negative and positive words (like our example above illustrates) are also included. 
 
 ```{r, message=FALSE}
@@ -148,19 +152,25 @@ Dictionaries can have both polarity and valence weights, but these are not used 
 
 The [`quanteda.sentiment` package](https://github.com/quanteda/quanteda.sentiment), which we loaded earlier, extends the `quanteda` package with functions for computing sentiment on text. It also includes eight additional sentiment dictionaries, spanning both polarity and valence:
 
+\
+
+
 
 | **Name**                         | **Description**                                               | **Polarity** | **Valence** |
+| --- | --- | :-: | :-: |
 |----------------|------------------------|----------------|----------------|
-| data_dictionary_AFINN            | Nielsen's (2011) 'new ANEW' valenced word list                |              | X           |
-| data_dictionary_ANEW             | Affective Norms for English Words (ANEW)                      |              | X           |
-| data_dictionary_geninqposneg     | Augmented General Inquirer *Positiv* and *Negativ* dictionary | \-           |             |
-| data_dictionary_HuLiu            | Positive and negative words from Hu and Liu (2004)            | \-           |             |
-| data_dictionary_LoughranMcDonald | Loughran and McDonald Sentiment Word Lists                    | \-           |             |
-| data_dictionary_LSD2015          | Lexicoder Sentiment Dictionary (2015)                         | \-           |             |
-| data_dictionary_NRC              | NRC Word-Emotion Association Lexicon                          | \-           |             |
-| data_dictionary_Rauh             | Rauh's German Political Sentiment Dictionary                  | \-           |             |
-| data_dictionary_sentiws          | SentimentWortschatz (SentiWS)                                 | \-           | \-          |
+| data_dictionary_AFINN            | Nielsen's (2011) 'new ANEW' valenced word list                |              | yes           |
+| data_dictionary_ANEW             | Affective Norms for English Words (ANEW)                      |              | yes           |
+| data_dictionary_geninqposneg     | Augmented General Inquirer *Positiv* and *Negativ* dictionary | yes           |             |
+| data_dictionary_HuLiu            | Positive and negative words from Hu and Liu (2004)            | yes           |             |
+| data_dictionary_LoughranMcDonald | Loughran and McDonald Sentiment Word Lists                    | yes           |             |
+| data_dictionary_LSD2015          | Lexicoder Sentiment Dictionary (2015)                         | yes           |             |
+| data_dictionary_NRC              | NRC Word-Emotion Association Lexicon                          | yes           |             |
+| data_dictionary_Rauh             | Rauh's German Political Sentiment Dictionary                  | yes           |             |
+| data_dictionary_sentiws          | SentimentWortschatz (SentiWS)                                 | yes           | yes          |
 
+
+\
 
 We can apply these established dictionaries to larger and more complex corpora. In the following example, we'll examine trends in the sentiment of immigration tweets from 2013-2017. 
 
@@ -245,7 +255,7 @@ tweets_analysis %>% select(doc_id, year, total, negative, neg_positive, positive
 
 ```
 
-We can manipulate the dataframe using tidyverse to examine the proportion of words that represent positive versus negative sentiment by each year. [AMBER: Might want to add description of sentiment score?] In the code below, we manipulate the `tweets_analysis` df to calculate percent positive, percent negative, and the difference (positive - negative) for a sentiment score for each year.
+We can manipulate the dataframe using tidyverse to examine the proportion of words that represent positive versus negative sentiment by each year. In the code below, we manipulate the `tweets_analysis` df to calculate percent positive, percent negative, and the difference (positive - negative) for the *sentiment score* for each year.
 
 ```{r, message=FALSE}
 
@@ -278,7 +288,6 @@ ggplot(data = by_year_pos, aes(x = year, y = prop, group = measure, colour = mea
 
 ```
 
-
 \
 
 ---
@@ -292,6 +301,13 @@ ggplot(data = by_year_pos, aes(x = year, y = prop, group = measure, colour = mea
 ### Apply topical dictionary
 
 Next we will apply topic-specific dictionaries. The logic is the same as the logic for sentiment dictionaries, however the lexicons we will now be measuring more than one category and considering topics as opposed to sentiment.
+
+
+\
+
+<center>![](/Users/cs86487/Dropbox/text-as-data-JUST-CORY-AND-AMBER/images/pap.jpeg){width="60%"}</center>
+<center>Source: Policy Agendas Project</center>
+\
 
 First, let's load a corpus of speeches by high-ranking representatives of the EU Member states, as well as speeches by members of the European Parliament and representatives of the EU Commission and the European Central Bank. All speeches are stored (in some cases, translated) in English. There is also metadata on the speakers, length and occasion of the speeches.
 
@@ -326,7 +342,7 @@ We can apply the dictionary to the speech corpus, grouping by country or suprana
 
 `dfm_weight` allows to transform the dictionary dfm into a metric other than a count. Below, we'll rely on the sentiment score metric, or the proportion of populist versus liberal words among total dictionary words.
 
-```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=8, fig.height=6}
 
 eu_toks = tokens(korpus.euspeech, remove_punct=TRUE) %>%
                 tokens_remove(pattern = stopwords("en")) %>%
@@ -369,7 +385,7 @@ eu_topics_df
 
 While grouping can be useful, we often want to observe variation at the smallest unit available (in this case the speech). Below, we generate the dfm without the grouping option and plot the variation of populism by country within individual speeches.
 
-```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
+```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=10, fig.height=8}
 
 # create dfm
 eu_dfm_nogroup = tokens(korpus.euspeech, remove_punct=TRUE) %>%
