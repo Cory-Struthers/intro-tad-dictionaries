@@ -292,7 +292,7 @@ ggplot(data = by_year_pos, aes(x = year, y = prop, group = measure, colour = mea
 
 ---
 
-**Question 2: Replicate the immigration tweet example from above, but this time apply the sentiment analysis skills to the Trump tweets corpus we previously analyzed ("trump_tweet_corp.rds"). Compare the results of sentiment analysis to the word frequency approaches and describe any differences in the trends observed.**
+**Question 2 (BREAKOUT). Replicate the immigration tweet example from above, but this time apply the sentiment analysis skills to the Trump tweets corpus we previously analyzed ("trump_tweet_corp.rds"). Compare the results of sentiment analysis to the word frequency approaches and describe any differences in the trends observed.**
 
 ---
 
@@ -427,7 +427,7 @@ The boxplots suggest that the European Commission's share of the corpus (# obser
 
 ---
 
-**Question 3: Using the `policy_agendas_english.RData` dictionary, reanalyze the EU speeches by creating a DFM and use the code below to select some topics and calculate the shares of topics based on this selection. Next, create a plot that shows the distribution of topics within the corpus by country based on the policy agenda dictionary.**
+**Question 3 (BREAKOUT). Using the `policy_agendas_english.RData` dictionary, reanalyze the EU speeches by creating a DFM and use the code below to select some topics and calculate the shares of topics based on this selection. Next, create a plot that shows the distribution of topics within the corpus by country based on the policy agenda dictionary.**
 
 ---
 
@@ -435,7 +435,7 @@ The boxplots suggest that the European Commission's share of the corpus (# obser
 
 ```{r, message=FALSE, results=FALSE, eval=FALSE, echo=TRUE}
 
-eu+topics_pa = convert(dfm_eu_pa, "data.frame") %>%
+eu_topics_pa = convert(dfm_eu_pa, "data.frame") %>%
   rename(Country = document) %>%
   select(Country, macroeconomics, finance, foreign_trade, labour, 
          healthcare, immigration, education, intl_affairs, defence) %>%
