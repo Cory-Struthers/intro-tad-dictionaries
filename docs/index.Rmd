@@ -90,7 +90,7 @@ rest_dfm_out
 
 ```
 
-The output tells us how many positive and negative words or phraes are included in each restaurant review. The first four reviews contain at least one positive word and zero negative words, suggesting they have a more positive tone. The fifth review has one negative word and no positive words, suggesting it has a more negative tone. 
+The output tells us how many positive and negative words or phrases are included in each restaurant review. The first four reviews contain at least one positive word and zero negative words, suggesting they have a more positive tone. The fifth review has one negative word and no positive words, suggesting it has a more negative tone. 
 
 Is the dictionary characterizing the reviews well?
 
@@ -341,7 +341,7 @@ populism_liberalism_dict
 
 We can apply the dictionary to the speech corpus, grouping by country or supranational entity (EU Commission, the EU Parliament, and the European Central Bank). Note that we do not need to use `tokens_compund` because the dictionary does not include compound terms.
 
-`dfm_weight` allows to transform the dictionary dfm into a metric other than a count. Below, we'll rely on the sentiment score metric, or the proportion of populist versus liberal words among total dictionary words.
+`dfm_weight` allows us to transform the dictionary dfm into a metric other than a count. Below, we'll rely on the sentiment score metric, or the proportion of populist versus liberal words among total dictionary words.
 
 ```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=8, fig.height=6}
 
@@ -358,9 +358,9 @@ convert(dfm_eu_prop, "data.frame")
 
 ```
 
-The results show that EU politicians use terms representing liberalism far more than they use terms representing populism. Yet there is some variation. Pocilymakers in Greece, Spain, and the EU Parliament tend to use populist rhethoric more often than policymakers elsewhere.
+The results show that EU politicians use terms representing liberalism far more than they use terms representing populism. Yet there is some variation. Policymakers in Greece, Spain, and the EU Parliament tend to use populist rhetoric more often than policymakers elsewhere.
 
-Next, we calculate the percent of populist rhethoric between 2007-2015, distinguishing between national governments, which includes representatives of the EU Parliament ("regierung"), and the EU authorities (EU Commission and ECB).
+Next, we calculate the percent of populist rhetoric between 2007-2015, distinguishing between national governments, which includes representatives of the EU Parliament ("regierung"), and the EU authorities (EU Commission and ECB).
 
 ```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
 
@@ -428,24 +428,10 @@ The boxplots suggest that the European Commission's share of the corpus (# obser
 
 ---
 
-**Question 3 (BREAKOUT). Using the `policy_agendas_english.RData` dictionary, reanalyze the EU speeches by creating a DFM and use the code below to select some topics and calculate the shares of topics based on this selection. Next, create a plot that shows the distribution of topics within the corpus by country based on the policy agenda dictionary.**
+**Question 3 (BREAKOUT). Use the policy_agendas_english.RData dictionary to analyze the topics in a country's speeches. First choose a country and subset the corpus. Then, walk through pre-processing steps, create a dfm, and apply the policy agendas dictionary to the country's speech corpus. Generate a plot that shows the distribution of topics within the corpus. What do you observe?**
 
 ---
 
 \ 
-
-```{r, message=FALSE, results=FALSE, eval=FALSE, echo=TRUE}
-
-eu_topics_pa = convert(dfm_eu_pa, "data.frame") %>%
-  rename(Country = document) %>%
-  select(Country, macroeconomics, finance, foreign_trade, labour, 
-         healthcare, immigration, education, intl_affairs, defence) %>%
-  gather(macroeconomics:defence, key = "Topic", value = "Share") %>% 
-  group_by(Country) %>% 
-  mutate(Share = Share/sum(Share)) %>% 
-  mutate(Topic = as_factor(Topic))
-
-```
-
 
 
