@@ -103,7 +103,7 @@ rest_toks = reviews %>%
     tokens(remove_punct = TRUE)  # create tokens object to add compounds
 rest_dfm_comp = tokens_compound(rest_toks, pattern = phrase(c("did not like", "didn't like", "do not recommend", "don't recommend"))) %>% 
     dfm(tolower = TRUE)   %>% ##  lowercase 
-    dfm_remove(pattern = stopwords("english")) ## now exclude stop words
+    dfm_remove(pattern = stopwords("english")) ## now exclude stop words 
 rest_dfm_comp
 
 # revise dictionary, adding negation
@@ -189,7 +189,7 @@ tweet_dfm = tweet_corp %>%
     dfm(tolower = TRUE)  %>% # convert to lowercase
     dfm_remove(pattern = stopwords("english")) ## exclude common words on a "stop" list
 
-# apply LSD for positive and negative words in each tweet (for simplicity, ignoring negation)
+# apply LSD for positive and negative words in each tweet 
 tweet_words_dict = dfm_lookup(tweet_dfm, dictionary = data_dictionary_LSD2015) 
 tweet_words_dict
 
@@ -220,7 +220,7 @@ tweet_dfm_revised  = tweet_corp %>%
            remove_symbols = TRUE) %>% 
     tokens_compound(data_dictionary_LSD2015) %>% # here, adding all compound terms in the dictionary
     dfm(tolower = TRUE)  %>% 
-    dfm_remove(pattern = stopwords("english")) 
+    dfm_remove(pattern = stopwords("english")) # now remove stopwords so "not_" has been captured
 
 # apply same dictionary to revised dfm 
 tweet_words_dict_revised = dfm_lookup(tweet_dfm_revised, dictionary = data_dictionary_LSD2015) 
@@ -293,7 +293,7 @@ ggplot(data = by_year_pos, aes(x = year, y = prop, group = measure, colour = mea
 
 ---
 
-**Question 2 (BREAKOUT). Calculate the polarity sentiment score (as we’ve done above) using a polarity dictionary for the Trump tweets corpus we previously analyzed (“trump_tweet_corp.rds”). You can apply the same dictionary (data_dictionary_LSD2015) or a different polarity dictionary. Compare the results of your analysis to the results of the word frequency approaches and describe any differences in the trends observed.**
+**Question 2 (BREAKOUT). Calculate the polarity sentiment score (as we’ve done above) using a polarity dictionary for the Trump tweets corpus we previously analyzed (“trump_tweet_corp.rds”). You can apply the same dictionary (data_dictionary_LSD2015) or a different polarity dictionary. Here, we will ignore differences between Android and iPhone and just examine Trump's Twitter sentiment overall in this time period.**
   
 ---
 
