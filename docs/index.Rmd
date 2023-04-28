@@ -146,11 +146,11 @@ data_dictionary_LSD2015
 
 ```
 
-Dictionary-based sentiment analysis in quanteda can take place in two different forms, depending on whether dictionary keys are part of a polarity-based sentiment scheme -- such as positive versus negative dictionary categories (keys) -- or whether a continuous sentiment score is associated with individual word patterns, what we call a valence-based sentiment scheme.
+Dictionary-based sentiment analysis in quanteda can take place in two different forms, depending on whether dictionary keys are part of a polarity-based sentiment scheme -- meaning binary positive versus binary negative dictionary categories -- or whether a continuous sentiment score is associated with individual word patterns -- meaning different values of positive versus negative sentiment, what we call a valence-based sentiment scheme.
 
-Dictionaries can have both polarity and valence weights, but these are not used in the same sentiment scoring scheme. "Polarity" is a category of one of two "poles" (such as negative and positive) applied to dictionary keys, whereas "valence" is a weight applied individually to each value within a key.
+Dictionaries can have both polarity and valence weights, but these are not used in the same sentiment scoring scheme. "Polarity" is a category of one of two "poles" (such as negative and positive) applied to dictionary keys, whereas "valence" is a weight applied individually to each value within a key (i.e., the amount of negativity or the amount of positivity).
 
-The [`quanteda.sentiment` package](https://github.com/quanteda/quanteda.sentiment), which we loaded earlier, extends the `quanteda` package with functions for computing sentiment on text. It also includes eight additional sentiment dictionaries, spanning both polarity and valence:
+The [`quanteda.sentiment package`](https://github.com/quanteda/quanteda.sentiment), which we loaded earlier, extends the `quanteda` package with functions for computing sentiment on text. It also includes eight additional sentiment dictionaries, spanning both polarity and valence:
 
 \
 
@@ -172,7 +172,7 @@ The [`quanteda.sentiment` package](https://github.com/quanteda/quanteda.sentimen
 
 \
 
-We can apply these established dictionaries to larger and more complex corpora. In the following example, we'll examine trends in the sentiment of immigration tweets from 2013-2017. 
+We can apply these established dictionaries to larger and more complex corpora. In the following example, we'll examine trends in the sentiment of immigration tweets from 2013-2017, focusing on polarity sentiment.
 
 After constructing or retrieving the corpus, we create the DFM and apply the sentiment dictionary to count the number of positive and negative words and phrases in each tweet using the LSD dictionary. 
 
@@ -255,7 +255,7 @@ tweets_analysis %>% select(doc_id, year, total, negative, neg_positive, positive
 
 ```
 
-We can manipulate the dataframe using tidyverse to examine the proportion of words that represent positive versus negative sentiment by each year. In the code below, we manipulate the `tweets_analysis` df to calculate percent positive, percent negative, and the difference (positive - negative) for the *sentiment score* for each year.
+We can manipulate the dataframe using tidyverse to examine the proportion of words that represent positive versus negative sentiment by each year. In the code below, we manipulate the `tweets_analysis` dataframe to calculate proportion terms positive, proportion terms negative, and the difference (positive - negative) for the *sentiment score* for each year. There are of course other ways we could calculate a sentiment score, such as subtracting the total number of negative words from the total number of positive words. 
 
 ```{r, message=FALSE}
 
@@ -274,7 +274,7 @@ by_year
 ```
 
 
-We can then plot the percent positive sentiment words using `ggplot2`. The figure below illustrates that tweets on immigration have become decreasingly positive since 2013, as indicated by the downward trend. 
+We can then plot the percent positive sentiment words using `ggplot2`. The figure below illustrates that tweets on immigration have become decreasingly positive since 2013, with the greatest drop between 2013 and 2014, as indicated by the downward trend. 
 
 ```{r, warning=FALSE, message=FALSE, fig.align='center', fig.width=6, fig.height=4}
 
@@ -292,8 +292,8 @@ ggplot(data = by_year_pos, aes(x = year, y = prop, group = measure, colour = mea
 
 ---
 
-**Question 2 (BREAKOUT). Replicate the immigration tweet example from above, but this time apply the sentiment analysis skills to the Trump tweets corpus we previously analyzed ("trump_tweet_corp.rds"). Compare the results of sentiment analysis to the word frequency approaches and describe any differences in the trends observed.**
-
+**Question 2 (BREAKOUT). Calculate the polarity sentiment score (as we’ve done above) using a polarity dictionary for the Trump tweets corpus we previously analyzed (“trump_tweet_corp.rds”). You can apply the same dictionary (data_dictionary_LSD2015) or a different polarity dictionary. Compare the results of your analysis to the results of the word frequency approaches and describe any differences in the trends observed.**
+  
 ---
 
 \
