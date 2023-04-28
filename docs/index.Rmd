@@ -200,6 +200,7 @@ Let's review a few of the tweets to see if the sentiment captures are accurate.
 ```{r, message=FALSE}
 
 tweet_words_dict_df = convert(tweet_words_dict, "data.frame")
+tweet_words_dict_df[1, ]
 tweet_words_dict_df[451, ]
 as.character(tweet_corp[1]) # capturing 'dirty'
 as.character(tweet_corp[451])
